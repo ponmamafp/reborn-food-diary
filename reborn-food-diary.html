@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RE:BORN PJ - 食事記録</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --pink-50:#fef7f8; --pink-100:#fdeef0; --pink-200:#fbdce2;
+    --pink-300:#f7b8c4; --pink-400:#f08da1; --pink-500:#e4607d; --pink-600:#d14468;
+    --gray-200:#e5e5e5; --gray-400:#a3a3a3; --gray-500:#737373; --gray-600:#525252; --gray-700:#404040;
+    --radius:16px; --shadow:0 2px 12px rgba(228,96,125,0.08);
+  }
+  body {
+    font-family:'Zen Maru Gothic','Hiragino Maru Gothic Pro',sans-serif;
+    background:linear-gradient(160deg,var(--pink-50) 0%,#fff5f7 40%,#fff 100%);
+    min-height:100vh; color:var(--gray-700); padding-bottom:100px;
+  }
+
+  /* Tabs */
+  .tab-bar {
+    display:flex; gap:0; padding:16px 16px 0; max-width:480px; margin:0 auto;
+  }
+  .tab-btn {
+    flex:1; padding:10px 0; text-align:center; font-family:inherit; font-size:14px; font-weight:700;
+    border:1.5px solid var(--pink-200); background:var(--pink-50); color:var(--pink-400);
+    cursor:pointer; transition:all 0.2s;
+  }
+  .tab-btn:first-child { border-radius:12px 0 0 12px; border-right:none; }
+  .tab-btn:last-child { border-radius:0 12px 12px 0; border-left:none; }
+  .tab-btn:nth-child(2) { border-radius:0; }
+  .tab-btn.active { background:var(--pink-400); color:#fff; border-color:var(--pink-400); }
+
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+
+  .date-nav {
+    display:flex; align-items:center; justify-content:center; gap:16px; padding:12px 20px 6px;
+  }
+  .date-nav button {
+    background:none; border:none; font-size:20px; color:var(--pink-400);
+    cursor:pointer; padding:4px 8px; border-radius:8px; transition:background 0.2s;
+  }
+  .date-nav button:hover { background:var(--pink-100); }
+  .date-display { font-size:18px; font-weight:700; color:var(--gray-600); min-width:180px; text-align:center; }
+  .date-display .weekday {
+    display:inline-block; background:var(--pink-200); color:var(--pink-600);
+    font-size:11px; padding:1px 8px; border-radius:10px; margin-left:6px;
+  }
+
+  .container { max-width:480px; margin:0 auto; padding:0 16px; }
+
+  .card {
+    background:#fff; border-radius:var(--radius); box-shadow:var(--shadow);
+    margin:10px 0; overflow:hidden; border:1px solid var(--pink-100);
+  }
+  .card-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px; cursor:pointer; user-select:none; transition:background 0.2s;
+  }
+  .card-header:hover { background:var(--pink-50); }
+  .card-label { font-weight:700; font-size:14px; color:var(--gray-700); }
+  .card-badge { font-size:11px; color:var(--pink-300); }
+  .card-body { padding:0 16px 12px; }
+
+  .input-row { display:flex; gap:6px; margin-bottom:6px; }
+  input[type="text"], .field-input {
+    border:1.5px solid var(--pink-200); border-radius:10px; padding:9px 12px;
+    font-size:14px; font-family:inherit; color:var(--gray-700); background:var(--pink-50);
+    outline:none; transition:border-color 0.2s;
+  }
+  input[type="text"]:focus, .field-input:focus { border-color:var(--pink-400); background:#fff; }
+  input::placeholder, textarea::placeholder { color:var(--pink-300); }
+  .input-row input[type="text"] { flex:1; min-width:0; }
+  .btn-add {
+    background:linear-gradient(135deg,var(--pink-300),var(--pink-400)); color:#fff; border:none;
+    border-radius:10px; padding:0 14px; font-size:13px; font-weight:700; cursor:pointer; transition:transform 0.15s; flex-shrink:0;
+  }
+  .btn-add:hover { transform:scale(1.05); }
+  .btn-add:active { transform:scale(0.97); }
+
+  .food-list { list-style:none; }
+  .food-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:6px 4px; border-bottom:1px solid var(--pink-100); font-size:14px; animation:fadeIn 0.25s ease;
+  }
+  .food-item:last-child { border-bottom:none; }
+  .food-name { flex:1; color:var(--gray-600); }
+  .food-delete {
+    background:none; border:none; color:var(--pink-300); font-size:14px; cursor:pointer;
+    padding:4px 8px; border-radius:6px;
+  }
+  .food-delete:hover { color:var(--pink-500); }
+  .empty-msg { text-align:center; color:var(--pink-300); font-size:14px; padding:10px 0; }
+
+  /* Meal time inline */
+  .meal-time-row {
+    display:flex; align-items:center; gap:8px; margin-bottom:8px;
+  }
+  .meal-time-row span { font-size:12px; color:var(--pink-400); font-weight:500; }
+  .meal-time-row input {
+    width:70px; border:1.5px solid var(--pink-200); border-radius:8px; padding:5px 8px;
+    font-size:13px; font-family:inherit; color:var(--gray-600); background:var(--pink-50);
+    outline:none; text-align:center;
+  }
+  .meal-time-row input:focus { border-color:var(--pink-400); background:#fff; }
+  .meal-time-row input::placeholder { color:var(--pink-300); }
+  .time-quick {
+    display:flex; gap:4px;
+  }
+  .time-quick button {
+    background:var(--pink-100); border:none; border-radius:6px; padding:5px 10px;
+    font-size:12px; font-family:inherit; color:var(--pink-500); cursor:pointer;
+  }
+  .time-quick button:hover { background:var(--pink-200); }
+  .time-hint { font-size:10px; color:var(--gray-400); margin-top:2px; }
+
+  /* Time select dropdown */
+  .time-select {
+    border:1.5px solid var(--pink-200); border-radius:8px; padding:5px 8px;
+    font-size:14px; font-family:inherit; color:var(--gray-700); background:#fff;
+    outline:none; cursor:pointer;
+  }
+  .time-select:focus { border-color:var(--pink-400); }
+
+  /* Add snack button */
+  .add-snack-btn {
+    display:block; width:100%; max-width:480px; margin:8px auto; padding:10px;
+    background:var(--pink-50); border:1.5px dashed var(--pink-300); border-radius:12px;
+    font-size:14px; font-family:inherit; color:var(--pink-400); font-weight:500;
+    cursor:pointer; transition:all 0.2s; text-align:center;
+  }
+  .add-snack-btn:hover { background:var(--pink-100); border-color:var(--pink-400); }
+
+  .snack-card { position:relative; }
+  .snack-remove {
+    position:absolute; top:10px; right:12px; background:none; border:none;
+    color:var(--pink-300); font-size:18px; cursor:pointer; padding:2px 6px; border-radius:6px;
+  }
+  .snack-remove:hover { color:var(--pink-500); background:var(--pink-100); }
+
+  /* Favorites */
+  .fav-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .fav-tag {
+    display:inline-flex; align-items:center; gap:4px;
+    background:var(--pink-100); border:none; border-radius:8px; padding:5px 10px;
+    font-size:12px; font-family:inherit; color:var(--pink-500); cursor:default;
+  }
+  .fav-tag .fav-del {
+    background:none; border:none; color:var(--pink-300); font-size:12px; cursor:pointer;
+    padding:0 2px; margin-left:2px;
+  }
+  .fav-tag .fav-del:hover { color:var(--pink-500); }
+  .fav-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; margin-bottom:6px; }
+  .fav-chip {
+    background:var(--pink-50); border:1px solid var(--pink-200); border-radius:8px;
+    padding:4px 10px; font-size:12px; font-family:inherit; color:var(--pink-500);
+    cursor:pointer; transition:all 0.15s;
+  }
+  .fav-chip:hover { background:var(--pink-200); }
+
+  /* Emoji settings */
+  .emoji-settings { display:flex; flex-direction:column; gap:8px; }
+  .emoji-row { display:flex; align-items:center; gap:10px; }
+  .emoji-row label { font-size:13px; color:var(--gray-600); font-weight:500; min-width:70px; }
+  .emoji-row input { width:60px; text-align:center; border:1.5px solid var(--pink-200); border-radius:8px; padding:6px 8px; font-size:16px; font-family:inherit; background:var(--pink-50); outline:none; }
+  .emoji-row input:focus { border-color:var(--pink-400); background:#fff; }
+  .emoji-row input::placeholder { color:var(--pink-300); }
+
+  /* kg row */
+  .kg-row { display:flex; align-items:center; gap:6px; }
+  .kg-row input { flex:1; }
+  .kg-unit { font-size:14px; font-weight:500; color:var(--gray-500); }
+
+  /* Toggle switches */
+  .toggle-list { display:flex; flex-direction:column; gap:10px; }
+  .toggle-row { display:flex; align-items:center; justify-content:space-between; }
+  .toggle-row span { font-size:14px; color:var(--gray-600); font-weight:500; }
+  .toggle-sw { position:relative; width:44px; height:24px; cursor:pointer; }
+  .toggle-sw input { opacity:0; width:0; height:0; }
+  .toggle-track {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:var(--gray-200); border-radius:12px; transition:background 0.3s;
+  }
+  .toggle-track::after {
+    content:''; position:absolute; width:18px; height:18px; left:3px; top:3px;
+    background:#fff; border-radius:50%; transition:transform 0.3s; box-shadow:0 1px 3px rgba(0,0,0,0.15);
+  }
+  .toggle-sw input:checked + .toggle-track { background:var(--pink-400); }
+  .toggle-sw input:checked + .toggle-track::after { transform:translateX(20px); }
+
+  /* Condition */
+  .condition-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+  .condition-item label { display:block; font-size:12px; color:var(--pink-500); font-weight:500; margin-bottom:3px; }
+  .condition-item input { width:100%; }
+
+  .mood-row { margin-top:2px; }
+  .mood-row > label { display:block; font-size:12px; color:var(--pink-500); font-weight:500; margin-bottom:6px; }
+  .mood-options { display:flex; gap:8px; }
+  .mood-btn {
+    flex:1; background:var(--pink-50); border:1.5px solid var(--pink-200); border-radius:10px;
+    padding:8px 4px; text-align:center; cursor:pointer; font-family:inherit;
+    transition:all 0.2s; font-size:14px; color:var(--gray-600); font-weight:700;
+  }
+  .mood-btn:hover { background:var(--pink-100); }
+  .mood-btn.active { background:var(--pink-200); border-color:var(--pink-400); color:var(--pink-600); }
+
+  /* Text sections */
+  .text-section {
+    background:#fff; border-radius:var(--radius); box-shadow:var(--shadow);
+    margin:10px 0; padding:14px 16px; border:1px solid var(--pink-100);
+  }
+  .text-section label { display:block; font-weight:700; font-size:14px; color:var(--gray-700); margin-bottom:8px; }
+  textarea {
+    width:100%; border:1.5px solid var(--pink-200); border-radius:10px; padding:9px 12px;
+    font-size:14px; font-family:inherit; color:var(--gray-700); background:var(--pink-50);
+    resize:vertical; min-height:55px; outline:none; transition:border-color 0.2s;
+  }
+  textarea:focus { border-color:var(--pink-400); background:#fff; }
+
+  /* Weekly report */
+  .weekly-section { margin:10px 0; }
+  .weekly-block {
+    background:#fff; border-radius:var(--radius); box-shadow:var(--shadow);
+    margin:10px 0; padding:14px 16px; border:1px solid var(--pink-100);
+  }
+  .weekly-block h3 { font-size:14px; color:var(--pink-500); margin-bottom:10px; font-weight:700; }
+  .weekly-field { margin-bottom:10px; }
+  .weekly-field label { display:block; font-size:13px; color:var(--gray-600); font-weight:500; margin-bottom:3px; }
+  .weekly-field input { width:100%; }
+  .weekly-field textarea { min-height:50px; }
+
+  .copy-bar {
+    position:fixed; bottom:0; left:0; right:0; padding:12px 16px;
+    background:rgba(255,255,255,0.92); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid var(--pink-100); display:flex; justify-content:center; z-index:100;
+  }
+  .btn-copy {
+    width:100%; max-width:480px; padding:13px;
+    background:linear-gradient(135deg,var(--pink-400),var(--pink-500)); color:#fff; border:none;
+    border-radius:14px; font-size:15px; font-weight:700; font-family:inherit; letter-spacing:1px;
+    cursor:pointer; transition:transform 0.15s; box-shadow:0 4px 16px rgba(228,96,125,0.25);
+  }
+  .btn-copy:hover { transform:translateY(-1px); }
+  .btn-copy:active { transform:translateY(0); }
+  .btn-copy.copied { background:linear-gradient(135deg,#86d4a0,#5cb87a); box-shadow:0 4px 16px rgba(92,184,122,0.25); }
+
+  .toast {
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.9);
+    background:rgba(60,60,60,0.92); color:#fff; padding:14px 28px; border-radius:14px;
+    font-size:15px; font-weight:500; opacity:0; pointer-events:none;
+    transition:opacity 0.3s, transform 0.3s; z-index:999;
+  }
+  .toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div style="text-align:center;padding:18px 16px 2px;font-size:16px;font-weight:700;color:var(--pink-500);letter-spacing:1px;">RE:BORN🎀報告作成</div>
+<div style="text-align:center;padding:0 16px 6px;font-size:11px;color:var(--gray-400);">※このブラウザに記録が保存されます（別の端末では表示されません）</div>
+
+<!-- Tabs -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('daily')">食事記録</button>
+  <button class="tab-btn" onclick="switchTab('weekly')">週次報告</button>
+  <button class="tab-btn" onclick="switchTab('settings')">設定</button>
+</div>
+
+<!-- ===== DAILY TAB ===== -->
+<div class="tab-content active" id="tab-daily">
+
+<div class="date-nav">
+  <button onclick="changeDate(-1)">&#8249;</button>
+  <div class="date-display" id="dateDisplay"></div>
+  <button onclick="changeDate(1)">&#8250;</button>
+</div>
+
+<div class="container">
+
+  <!-- Condition -->
+  <div class="card" id="section-condition">
+    <div class="card-header" onclick="toggle(this)">
+      <span class="card-label">コンディション <span class="card-badge">（任意）</span></span>
+    </div>
+    <div class="card-body">
+      <div class="condition-grid">
+        <div class="condition-item">
+          <label>起床時間</label>
+          <input type="text" id="input-wakeup" placeholder="6時半" oninput="saveField('wakeup',this.value)">
+        </div>
+        <div class="condition-item">
+          <label>睡眠時間</label>
+          <div class="kg-row"><input type="text" id="input-sleep" placeholder="6.5" oninput="saveField('sleep',this.value)"><span class="kg-unit">時間</span></div>
+        </div>
+        <div class="condition-item">
+          <label>体重</label>
+          <div class="kg-row"><input type="text" id="input-weight" placeholder="52.3" oninput="saveField('weight',this.value)"><span class="kg-unit">kg</span></div>
+        </div>
+      </div>
+      <div class="mood-row">
+        <label>気分</label>
+        <div class="mood-options">
+          <button class="mood-btn" data-mood="great" onclick="selectMood('great')">◎</button>
+          <button class="mood-btn" data-mood="good" onclick="selectMood('good')">○</button>
+          <button class="mood-btn" data-mood="so-so" onclick="selectMood('so-so')">△</button>
+          <button class="mood-btn" data-mood="bad" onclick="selectMood('bad')">×</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Morning -->
+  <div class="card" id="meal-morning">
+    <div class="card-header" onclick="toggle(this)">
+      <span class="card-label">朝ごはん</span>
+    </div>
+    <div class="card-body">
+      <div class="meal-time-row">
+        <span>時間</span>
+        <select class="time-select" id="mtime-morning-h" onchange="setMealTimePart('morning','h',this.value)">
+          <option value="">--</option>
+          <option value="04">4</option><option value="05">5</option><option value="06">6</option>
+          <option value="07">7</option><option value="08">8</option><option value="09">9</option>
+          <option value="10">10</option><option value="11">11</option>
+        </select>
+        <span style="color:var(--gray-500);font-size:13px;">時</span>
+        <select class="time-select" onchange="setMealTimePart('morning','m',this.value)" id="mtime-morning-m">
+          <option value="">--</option><option value="00">00</option><option value="10">10</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option>
+        </select>
+        <span style="color:var(--gray-500);font-size:13px;">分</span>
+      </div>
+      <div class="input-row">
+        <input type="text" id="input-morning" placeholder="例: ご飯、味噌汁、納豆..." onkeydown="if(event.key==='Enter'&&!event.isComposing)addFood('morning')">
+        <button class="btn-add" onclick="addFood('morning')">追加</button>
+      </div>
+      <ul class="food-list" id="list-morning"></ul>
+    </div>
+  </div>
+
+  <!-- Lunch -->
+  <div class="card" id="meal-lunch">
+    <div class="card-header" onclick="toggle(this)">
+      <span class="card-label">昼ごはん</span>
+    </div>
+    <div class="card-body">
+      <div class="meal-time-row">
+        <span>時間</span>
+        <select class="time-select" id="mtime-lunch-h" onchange="setMealTimePart('lunch','h',this.value)">
+          <option value="">--</option>
+          <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+          <option value="13">13</option><option value="14">14</option><option value="15">15</option>
+          <option value="16">16</option>
+        </select>
+        <span style="color:var(--gray-500);font-size:13px;">時</span>
+        <select class="time-select" id="mtime-lunch-m" onchange="setMealTimePart('lunch','m',this.value)">
+          <option value="">--</option><option value="00">00</option><option value="10">10</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option>
+        </select>
+        <span style="color:var(--gray-500);font-size:13px;">分</span>
+      </div>
+      <div class="input-row">
+        <input type="text" id="input-lunch" placeholder="例: ご飯、味噌汁、納豆..." onkeydown="if(event.key==='Enter'&&!event.isComposing)addFood('lunch')">
+        <button class="btn-add" onclick="addFood('lunch')">追加</button>
+      </div>
+      <ul class="food-list" id="list-lunch"></ul>
+    </div>
+  </div>
+
+  <!-- Dinner -->
+  <div class="card" id="meal-dinner">
+    <div class="card-header" onclick="toggle(this)">
+      <span class="card-label">夜ごはん</span>
+    </div>
+    <div class="card-body">
+      <div class="meal-time-row">
+        <span>時間</span>
+        <select class="time-select" id="mtime-dinner-h" onchange="setMealTimePart('dinner','h',this.value)">
+          <option value="">--</option>
+          <option value="16">16</option><option value="17">17</option><option value="18">18</option>
+          <option value="19">19</option><option value="20">20</option><option value="21">21</option>
+          <option value="22">22</option><option value="23">23</option>
+        </select>
+        <span style="color:var(--gray-500);font-size:13px;">時</span>
+        <select class="time-select" id="mtime-dinner-m" onchange="setMealTimePart('dinner','m',this.value)">
+          <option value="">--</option><option value="00">00</option><option value="10">10</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="50">50</option>
+        </select>
+        <span style="color:var(--gray-500);font-size:13px;">分</span>
+      </div>
+      <div class="input-row">
+        <input type="text" id="input-dinner" placeholder="例: ご飯、味噌汁、納豆..." onkeydown="if(event.key==='Enter'&&!event.isComposing)addFood('dinner')">
+        <button class="btn-add" onclick="addFood('dinner')">追加</button>
+      </div>
+      <ul class="food-list" id="list-dinner"></ul>
+    </div>
+  </div>
+
+  <!-- Snacks (multiple) -->
+  <div id="section-snack">
+    <div id="snacks-container"></div>
+    <button class="add-snack-btn" onclick="addSnackSlot()">+ 間食（補食）を追加</button>
+  </div>
+
+  <!-- Water -->
+  <div class="card" id="section-water">
+    <div class="card-header" onclick="toggle(this)">
+      <span class="card-label">水分 <span class="card-badge">（任意）</span></span>
+    </div>
+    <div class="card-body">
+      <div class="input-row">
+        <input type="text" id="input-water" placeholder="水 500ml, コーヒー 1杯" oninput="saveField('water',this.value)">
+      </div>
+    </div>
+  </div>
+
+  <!-- Today -->
+  <div class="text-section" id="section-today">
+    <label>今日あったこと <span class="card-badge">（任意）</span></label>
+    <textarea id="today" placeholder="今日の出来事や感じたこと..." oninput="saveField('today',this.value)"></textarea>
+  </div>
+
+  <!-- Memo -->
+  <div class="text-section" id="section-memo">
+    <label>ひとことメモ <span class="card-badge">（任意）</span></label>
+    <textarea id="memo" placeholder="体調や気づき、がんばったこと..." oninput="saveField('memo',this.value)"></textarea>
+  </div>
+
+  <!-- Custom items -->
+  <div id="custom-items-container"></div>
+
+  <!-- Steps -->
+  <div class="card" id="section-steps">
+    <div class="card-header" onclick="toggle(this)">
+      <span class="card-label">歩数 <span class="card-badge">（任意）</span></span>
+    </div>
+    <div class="card-body">
+      <div class="input-row">
+        <div class="kg-row"><input type="text" id="input-steps" placeholder="5000" oninput="saveField('steps',this.value)"><span class="kg-unit">歩</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== WEEKLY TAB ===== -->
+<div class="tab-content" id="tab-weekly">
+<div class="container" style="padding-top:12px;">
+
+  <div class="weekly-block">
+    <h3>体重記録</h3>
+    <div id="start-display" style="background:var(--pink-50);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--pink-500);font-weight:500;display:none;"></div>
+    <div class="weekly-field">
+      <label>今週の体重</label>
+      <div class="kg-row"><input type="text" id="w-weight" placeholder="52.3" oninput="saveWeekly('weight',this.value)"><span class="kg-unit">kg</span></div>
+    </div>
+    <div class="weekly-field">
+      <label>今週の体脂肪</label>
+      <div class="kg-row"><input type="text" id="w-fat" placeholder="25.0" oninput="saveWeekly('fat',this.value)"><span class="kg-unit">%</span></div>
+    </div>
+    <div class="weekly-field">
+      <label>先週からの変化（体重）</label>
+      <div class="kg-row"><input type="text" id="w-diff-week" placeholder="-0.2" oninput="saveWeekly('diff_week',this.value)"><span class="kg-unit">kg</span></div>
+    </div>
+    <div class="weekly-field">
+      <label>先週からの変化（体脂肪）</label>
+      <div class="kg-row"><input type="text" id="w-diff-week-fat" placeholder="-0.5" oninput="saveWeekly('diff_week_fat',this.value)"><span class="kg-unit">%</span></div>
+    </div>
+    <div class="weekly-field">
+      <label>スタートからの変化（体重）</label>
+      <div class="kg-row"><input type="text" id="w-diff-start" placeholder="-1.5" oninput="saveWeekly('diff_start',this.value)"><span class="kg-unit">kg</span></div>
+    </div>
+    <div class="weekly-field">
+      <label>スタートからの変化（体脂肪）</label>
+      <div class="kg-row"><input type="text" id="w-diff-start-fat" placeholder="-2.0" oninput="saveWeekly('diff_start_fat',this.value)"><span class="kg-unit">%</span></div>
+    </div>
+  </div>
+
+  <div class="weekly-block">
+    <h3>今週の振り返り</h3>
+    <textarea id="w-review" placeholder="例: 間食を減らせた、野菜を意識できた..." oninput="saveWeekly('review',this.value)"></textarea>
+  </div>
+
+  <div class="weekly-block">
+    <h3>食事</h3>
+    <div class="weekly-field">
+      <label>良かった点</label>
+      <textarea id="w-food-good" placeholder="例: 朝ごはんを毎日食べられた" oninput="saveWeekly('food_good',this.value)"></textarea>
+    </div>
+    <div class="weekly-field">
+      <label>気をつけたい点</label>
+      <textarea id="w-food-improve" placeholder="例: 夜の炭水化物を控えめにしたい" oninput="saveWeekly('food_improve',this.value)"></textarea>
+    </div>
+  </div>
+
+  <div class="weekly-block">
+    <h3>運動</h3>
+    <div class="weekly-field">
+      <label>できたこと</label>
+      <textarea id="w-exercise-done" placeholder="例: ウォーキング3回できた" oninput="saveWeekly('exercise_done',this.value)"></textarea>
+    </div>
+    <div class="weekly-field">
+      <label>頑張りたいこと</label>
+      <textarea id="w-exercise-goal" placeholder="例: ストレッチを毎日やる" oninput="saveWeekly('exercise_goal',this.value)"></textarea>
+    </div>
+  </div>
+
+  <div class="weekly-block">
+    <h3>一週間の目標</h3>
+    <textarea id="w-goal" placeholder="例: 間食を1日1回にする" oninput="saveWeekly('goal',this.value)"></textarea>
+  </div>
+
+  <div class="weekly-block">
+    <h3>メモ欄</h3>
+    <textarea id="w-memo" placeholder="体調・その他特記事項..." oninput="saveWeekly('memo',this.value)"></textarea>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== SETTINGS TAB ===== -->
+<div class="tab-content" id="tab-settings">
+<div class="container" style="padding-top:12px;">
+
+  <div class="weekly-block">
+    <h3>スタート時の記録</h3>
+    <div class="time-hint" style="margin-bottom:8px;">週次報告の頭に表示されます</div>
+    <div class="weekly-field">
+      <label>スタート時の体重</label>
+      <div class="kg-row"><input type="text" id="start-weight" placeholder="55.0" oninput="saveStartField('weight',this.value)"><span class="kg-unit">kg</span></div>
+    </div>
+    <div class="weekly-field">
+      <label>スタート時の体脂肪</label>
+      <div class="kg-row"><input type="text" id="start-fat" placeholder="28.0" oninput="saveStartField('fat',this.value)"><span class="kg-unit">%</span></div>
+    </div>
+  </div>
+
+  <div class="weekly-block">
+    <h3>表示する項目</h3>
+    <div class="time-hint" style="margin-bottom:8px;">使わない項目はOFFにすると非表示になります</div>
+    <div class="toggle-list" id="toggle-list"></div>
+  </div>
+
+  <div class="weekly-block">
+    <h3>追加項目</h3>
+    <div class="time-hint" style="margin-bottom:8px;">サプリ・運動・体調など、好きな項目を追加できます</div>
+    <div class="input-row">
+      <input type="text" id="custom-input" placeholder="例: サプリ、運動、体調..." onkeydown="if(event.key==='Enter'&&!event.isComposing)addCustomItem()">
+      <button class="btn-add" onclick="addCustomItem()">追加</button>
+    </div>
+    <div id="custom-list" class="fav-list"></div>
+  </div>
+
+  <div class="weekly-block">
+    <h3>項目の絵文字・記号</h3>
+    <div class="time-hint" style="margin-bottom:8px;">コピー出力時に各項目の頭に付く絵文字を設定できます</div>
+    <div class="emoji-settings" id="emoji-settings">
+      <div class="emoji-row"><label>朝ごはん</label><input type="text" id="emoji-morning" placeholder="🍳" oninput="saveEmoji('morning',this.value)"></div>
+      <div class="emoji-row"><label>昼ごはん</label><input type="text" id="emoji-lunch" placeholder="🍽" oninput="saveEmoji('lunch',this.value)"></div>
+      <div class="emoji-row"><label>夜ごはん</label><input type="text" id="emoji-dinner" placeholder="🌙" oninput="saveEmoji('dinner',this.value)"></div>
+      <div class="emoji-row"><label>間食（補食）</label><input type="text" id="emoji-snack" placeholder="☕" oninput="saveEmoji('snack',this.value)"></div>
+      <div class="emoji-row"><label>水分</label><input type="text" id="emoji-water" placeholder="💧" oninput="saveEmoji('water',this.value)"></div>
+      <div id="emoji-custom-rows"></div>
+    </div>
+  </div>
+
+  <div class="weekly-block">
+    <h3>よく使う食事</h3>
+    <div class="time-hint" style="margin-bottom:8px;">朝・昼・夜のカードにボタン表示されます</div>
+    <div class="input-row">
+      <input type="text" id="fav-input" placeholder="登録したい食事名..." onkeydown="if(event.key==='Enter'&&!event.isComposing)addFavorite()">
+      <button class="btn-add" onclick="addFavorite()">追加</button>
+    </div>
+    <div id="fav-list" class="fav-list"></div>
+  </div>
+
+  <div class="weekly-block">
+    <h3>よく使う間食</h3>
+    <div class="time-hint" style="margin-bottom:8px;">間食カードにボタン表示されます</div>
+    <div class="input-row">
+      <input type="text" id="fav-snack-input" placeholder="登録したい間食名..." onkeydown="if(event.key==='Enter'&&!event.isComposing)addFavSnack()">
+      <button class="btn-add" onclick="addFavSnack()">追加</button>
+    </div>
+    <div id="fav-snack-list" class="fav-list"></div>
+  </div>
+
+  <div class="weekly-block">
+    <h3>データ管理</h3>
+    <div class="time-hint">すべての記録はこのブラウザに保存されています</div>
+  </div>
+
+</div>
+</div>
+
+<div class="copy-bar">
+  <button class="btn-copy" id="copyBtn" onclick="copyAll()">コピーして報告する</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const MEALS = { morning:{label:'朝ごはん'}, lunch:{label:'昼ごはん'}, dinner:{label:'夜ごはん'} };
+const MOODS = { great:'◎', good:'○', 'so-so':'△', bad:'×' };
+const WEEKDAYS = ['日','月','火','水','木','金','土'];
+
+let currentDate = new Date(); currentDate.setHours(0,0,0,0);
+let currentTab = 'daily';
+
+function dateKey(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function sk(s) { return `reborn_${dateKey(currentDate)}_${s}`; }
+function formatDate(d) { return `${d.getMonth()+1}月${d.getDate()}日 <span class="weekday">${WEEKDAYS[d.getDay()]}</span>`; }
+
+function getData(meal) { const r=localStorage.getItem(sk(meal)); return r?JSON.parse(r):[]; }
+function setData(meal,arr) { localStorage.setItem(sk(meal),JSON.stringify(arr)); }
+function saveField(key,val) { localStorage.setItem(sk(key),val); }
+function loadField(key) { return localStorage.getItem(sk(key))||''; }
+
+// Weekly uses a week key (year-week)
+function weekKey() {
+  const d=new Date(currentDate); d.setDate(d.getDate()-d.getDay());
+  return `reborn_week_${dateKey(d)}`;
+}
+function saveWeekly(key,val) { localStorage.setItem(`${weekKey()}_${key}`,val); }
+function loadWeekly(key) { return localStorage.getItem(`${weekKey()}_${key}`)||''; }
+
+function changeDate(delta) { currentDate.setDate(currentDate.getDate()+delta); renderAll(); }
+
+function switchTab(tab) {
+  currentTab = tab;
+  const tabs=['daily','weekly','settings'];
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active', tabs[i]===tab));
+  tabs.forEach(t=>document.getElementById(`tab-${t}`).classList.toggle('active', t===tab));
+  if(tab==='weekly') loadWeeklyFields();
+  if(tab==='settings'){ renderToggles(); renderCustomList(); renderFavorites(); renderFavSnacks(); loadEmojiSettings(); loadStartFields(); }
+}
+
+function toggle(header) {
+  const body=header.nextElementSibling;
+  body.style.display=body.style.display==='none'?'block':'none';
+}
+
+function renderDate() { document.getElementById('dateDisplay').innerHTML=formatDate(currentDate); }
+
+function renderMeal(meal) {
+  const items=getData(meal), list=document.getElementById(`list-${meal}`);
+  const favs=getFavorites();
+  let html='';
+  if(!items.length && !favs.length){
+    html+='<div class="empty-msg">まだ記録がありません</div>';
+  } else {
+    if(favs.length){
+      html+=`<div class="fav-chips">${favs.map(f=>`<button class="fav-chip" onclick="favToMeal('${meal}','${escapeHtml(f)}')">${escapeHtml(f)}</button>`).join('')}</div>`;
+    }
+    if(items.length){
+      html+=items.map((f,i)=>`<div class="food-item"><span class="food-name">${escapeHtml(f)}</span><button class="food-delete" onclick="deleteFood('${meal}',${i})">&#10005;</button></div>`).join('');
+    }
+  }
+  list.innerHTML=html;
+}
+
+function addFood(meal) {
+  const inp=document.getElementById(`input-${meal}`), val=inp.value.trim();
+  if(!val) return;
+  const items=getData(meal); items.push(val); setData(meal,items);
+  inp.value=''; renderMeal(meal); inp.focus();
+}
+function deleteFood(meal,idx) { const items=getData(meal); items.splice(idx,1); setData(meal,items); renderMeal(meal); }
+
+function setTime(meal,val) {
+  saveField(`mtime_${meal}`,val);
+  // Update selects
+  const [h,m]=val.split(':');
+  const hs=document.getElementById(`mtime-${meal}-h`);
+  const ms=document.getElementById(`mtime-${meal}-m`);
+  if(hs) hs.value=h||'';
+  if(ms) ms.value=m||'';
+}
+
+function setMealTimePart(meal, part, val) {
+  const cur=loadField(`mtime_${meal}`)||'';
+  const [h,m]=cur.split(':');
+  let nt;
+  if(part==='h'){ nt = val ? `${val}:${m||'00'}` : ''; }
+  else { nt = (h||val) ? `${h||'00'}:${val||'00'}` : ''; }
+  saveField(`mtime_${meal}`,nt);
+}
+
+function selectMood(mood) {
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));
+  if(loadField('mood')===mood){ saveField('mood',''); }
+  else { document.querySelector(`.mood-btn[data-mood="${mood}"]`).classList.add('active'); saveField('mood',mood); }
+}
+
+function loadCondition() {
+  document.getElementById('input-wakeup').value=loadField('wakeup');
+  document.getElementById('input-sleep').value=loadField('sleep');
+  document.getElementById('input-weight').value=loadField('weight');
+  const mood=loadField('mood');
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.toggle('active',b.dataset.mood===mood));
+}
+
+function loadMealTimes() {
+  Object.keys(MEALS).forEach(m=>{
+    const val=loadField(`mtime_${m}`)||'';
+    const [h,mm]=val.split(':');
+    const hs=document.getElementById(`mtime-${m}-h`);
+    const ms=document.getElementById(`mtime-${m}-m`);
+    if(hs) hs.value=h||'';
+    if(ms) ms.value=mm||'';
+  });
+}
+
+// Snacks: stored as JSON array [{time:'15:00', items:['チョコ','コーヒー']}, ...]
+function getSnacks() { const r=localStorage.getItem(sk('snacks')); return r?JSON.parse(r):[]; }
+function saveSnacks(arr) { localStorage.setItem(sk('snacks'), JSON.stringify(arr)); }
+
+function addSnackSlot() {
+  const snacks=getSnacks();
+  snacks.push({time:'', items:[]});
+  saveSnacks(snacks);
+  renderSnacks();
+}
+
+function removeSnackSlot(idx) {
+  const snacks=getSnacks();
+  snacks.splice(idx,1);
+  saveSnacks(snacks);
+  renderSnacks();
+}
+
+function setSnackTime(idx, val) {
+  const snacks=getSnacks();
+  snacks[idx].time=val;
+  saveSnacks(snacks);
+}
+
+function setSnackTimeQuick(idx, val) {
+  const snacks=getSnacks();
+  snacks[idx].time=val;
+  saveSnacks(snacks);
+  const el=document.getElementById(`snack-time-${idx}`);
+  if(el) el.value=val;
+}
+
+function setSnackTimePart(idx, part, val) {
+  const snacks=getSnacks();
+  const cur=snacks[idx].time||'';
+  const [h,m]=cur.split(':');
+  if(part==='h'){
+    snacks[idx].time = val ? `${val}:${m||'00'}` : '';
+  } else {
+    snacks[idx].time = (h||val) ? `${h||'00'}:${val||'00'}` : '';
+  }
+  saveSnacks(snacks);
+}
+
+function addSnackFood(idx) {
+  const inp=document.getElementById(`snack-input-${idx}`);
+  const val=inp.value.trim();
+  if(!val) return;
+  const snacks=getSnacks();
+  snacks[idx].items.push(val);
+  saveSnacks(snacks);
+  inp.value='';
+  renderSnacks();
+}
+
+function deleteSnackFood(idx, fi) {
+  const snacks=getSnacks();
+  snacks[idx].items.splice(fi,1);
+  saveSnacks(snacks);
+  renderSnacks();
+}
+
+function renderSnacks() {
+  const snacks=getSnacks();
+  const container=document.getElementById('snacks-container');
+  if(!snacks.length){ container.innerHTML=''; return; }
+  container.innerHTML=snacks.map((s,i)=>`
+    <div class="card snack-card">
+      <button class="snack-remove" onclick="removeSnackSlot(${i})">&#10005;</button>
+      <div class="card-header">
+        <span class="card-label">間食（補食）${snacks.length>1?' '+(i+1):''}</span>
+      </div>
+      <div class="card-body">
+        <div class="meal-time-row">
+          <span>時間</span>
+          ${(()=>{
+            const [sh, sm] = (s.time||'').split(':');
+            let hOpts='<option value="">--</option>';
+            for(let h=0;h<24;h++){ const v=String(h).padStart(2,'0'); hOpts+=`<option value="${v}" ${sh===v?'selected':''}>${h}</option>`; }
+            let mOpts='<option value="">--</option>';
+            ['00','10','20','30','40','50'].forEach(m=>{ mOpts+=`<option value="${m}" ${sm===m?'selected':''}>${m}</option>`; });
+            return `
+              <select class="time-select" onchange="setSnackTimePart(${i},'h',this.value)">${hOpts}</select>
+              <span style="color:var(--gray-500);font-size:13px;">時</span>
+              <select class="time-select" onchange="setSnackTimePart(${i},'m',this.value)">${mOpts}</select>
+              <span style="color:var(--gray-500);font-size:13px;">分</span>
+            `;
+          })()}
+        </div>
+        <div class="input-row">
+          <input type="text" id="snack-input-${i}" placeholder="例: ご飯、味噌汁、納豆..."
+            onkeydown="if(event.key==='Enter'&&!event.isComposing)addSnackFood(${i})">
+          <button class="btn-add" onclick="addSnackFood(${i})">追加</button>
+        </div>
+        <ul class="food-list">${(()=>{
+          const fs=getFavSnacks();
+          let h='';
+          if(fs.length) h+=`<div class="fav-chips">${fs.map(f=>`<button class="fav-chip" onclick="favToSnack(${i},'${escapeHtml(f)}')">${escapeHtml(f)}</button>`).join('')}</div>`;
+          if(s.items.length) h+=s.items.map((f,fi)=>`<li class="food-item"><span class="food-name">${escapeHtml(f)}</span><button class="food-delete" onclick="deleteSnackFood(${i},${fi})">&#10005;</button></li>`).join('');
+          else if(!fs.length) h+='<li class="empty-msg">まだ記録がありません</li>';
+          return h;
+        })()}</ul>
+      </div>
+    </div>`).join('');
+}
+
+function renderAll() {
+  renderDate();
+  Object.keys(MEALS).forEach(m=>renderMeal(m));
+  loadCondition(); loadMealTimes();
+  renderSnacks();
+  const stepsEl=document.getElementById('input-steps');
+  if(stepsEl) stepsEl.value=loadField('steps');
+  document.getElementById('input-water').value=loadField('water');
+  document.getElementById('today').value=loadField('today');
+  document.getElementById('memo').value=loadField('memo');
+  renderFavorites();
+  applyVisibility();
+  renderCustomItems();
+}
+
+function updateStartDisplay() {
+  const el=document.getElementById('start-display');
+  if(!el) return;
+  const sw=getStartField('weight'), sf=getStartField('fat');
+  if(sw||sf){
+    const parts=[];
+    if(sw) parts.push(`体重 ${sw}kg`);
+    if(sf) parts.push(`体脂肪 ${sf}%`);
+    el.innerHTML=`📌 スタート時：${parts.join(' / ')}`;
+    el.style.display='block';
+  } else {
+    el.style.display='none';
+  }
+}
+
+function loadWeeklyFields() {
+  updateStartDisplay();
+  ['weight','fat','diff_week','diff_week_fat','diff_start','diff_start_fat'].forEach(k=>{
+    const el=document.getElementById(`w-${k.replace(/_/g,'-')}`);
+    if(el) el.value=loadWeekly(k);
+  });
+  ['review','food_good','food_improve','exercise_done','exercise_goal','goal','memo'].forEach(k=>{
+    const el=document.getElementById(`w-${k.replace(/_/g,'-')}`);
+    if(el) el.value=loadWeekly(k);
+  });
+}
+
+function buildDailyReport() {
+  const d=currentDate, m=d.getMonth()+1, dd=d.getDate(), w=WEEKDAYS[d.getDay()];
+  const MEAL_EMOJI = { morning:getEmoji('morning'), lunch:getEmoji('lunch'), dinner:getEmoji('dinner') };
+  let lines=[`${d.getFullYear()}/${String(m).padStart(2,'0')}/${String(dd).padStart(2,'0')}(${w})`, ''];
+
+  // Condition
+  const wakeup=loadField('wakeup'), sleep=loadField('sleep'), weight=loadField('weight'), mood=loadField('mood');
+  if(wakeup||sleep||weight||mood){
+    if(wakeup) lines.push(`起床 ${wakeup}`);
+    if(sleep) lines.push(`睡眠 ${sleep}${/[a-zA-Z時h]/.test(sleep)?'':'時間'}`);
+    if(weight) lines.push(`体重 ${weight}${/[a-zA-Zキロｋｇ]/.test(weight)?'':'kg'}`);
+    if(mood) lines.push(`気分 ${MOODS[mood]||mood}`);
+    lines.push('');
+  }
+
+  // Build timeline: collect meals + snacks + timed customs, sort by time
+  const entries = [];
+  Object.keys(MEALS).forEach(key=>{
+    const items=getData(key), t=loadField(`mtime_${key}`);
+    if(items.length>0) entries.push({ time:t, emoji:MEAL_EMOJI[key], items });
+  });
+  // Add snacks
+  const snacks=getSnacks();
+  snacks.forEach(s=>{
+    if(s.items.length>0) entries.push({ time:s.time, emoji:getEmoji('snack'), items:s.items });
+  });
+  // Add timed custom items
+  const customs=getCustomItems();
+  const untimedCustoms=[];
+  customs.forEach((name,i)=>{
+    const v=loadField(`custom_${i}`), t=loadField(`custom_time_${i}`);
+    if(!v) return;
+    const emoji=getEmoji(`custom_${i}`)||'';
+    if(t){ entries.push({ time:t, label:name, emoji, text:v, isCustom:true }); }
+    else { untimedCustoms.push({name, emoji, text:v}); }
+  });
+  const timeToMin = t => { if(!t) return -1; const p=t.split(':').map(Number); return (p[0]||0)*60+(p[1]||0); };
+  entries.sort((a,b)=>{
+    const ta=timeToMin(a.time), tb=timeToMin(b.time);
+    if(ta<0 && tb<0) return 0;
+    if(ta<0) return 1; if(tb<0) return -1;
+    return ta-tb;
+  });
+  entries.forEach(e=>{
+    if(e.isCustom){
+      const prefix = e.emoji ? `${e.emoji} ` : '';
+      lines.push(`${prefix}${e.time} ${e.label}`);
+      lines.push(e.text);
+      lines.push('');
+    } else {
+      const header = e.time ? `${e.emoji} ${e.time}` : `${e.emoji}`;
+      lines.push(header);
+      lines.push(e.items.join('、'));
+      lines.push('');
+    }
+  });
+
+  const water=loadField('water');
+  if(water){ lines.push(`${getEmoji('water')} 水分：${water}`); lines.push(''); }
+
+  const today=loadField('today');
+  const memo=loadField('memo');
+  if(today||memo){
+    lines.push('ーーーーー');
+    lines.push('');
+    if(today){ lines.push(today); lines.push(''); }
+    if(memo){ lines.push(`📝 ひとことメモ`); lines.push(memo); lines.push(''); }
+  }
+
+  // Untimed custom items (already collected above)
+  untimedCustoms.forEach(c=>{
+    const prefix = c.emoji ? `${c.emoji} ` : '';
+    lines.push(`${prefix}${c.name}`); lines.push(c.text); lines.push('');
+  });
+
+  const steps=loadField('steps');
+  if(steps){ lines.push(`👣 歩数：${steps}${/[歩a-zA-Z]/.test(steps)?'':'歩'}`); lines.push(''); }
+
+  return lines.join('\n').trimEnd();
+}
+
+function buildWeeklyReport() {
+  let lines=[`RE:BORN 週次報告`, ''];
+  const sw=getStartField('weight'), sf=getStartField('fat');
+  const wt=loadWeekly('weight'), ft=loadWeekly('fat');
+  const dw=loadWeekly('diff_week'), dwf=loadWeekly('diff_week_fat');
+  const ds=loadWeekly('diff_start'), dsf=loadWeekly('diff_start_fat');
+  if(sw||sf||wt||ft||dw||dwf||ds||dsf){
+    lines.push(`○体重記録`);
+    if(sw||sf){
+      const parts=[];
+      if(sw) parts.push(`${sw}kg`);
+      if(sf) parts.push(`${sf}%`);
+      lines.push(`スタート時：${parts.join(' / ')}`);
+    }
+    if(wt||ft){
+      const parts=[];
+      if(wt) parts.push(`${wt}kg`);
+      if(ft) parts.push(`${ft}%`);
+      lines.push(`**今週：${parts.join(' / ')}**`);
+    }
+    if(dw||dwf){
+      const parts=[];
+      if(dw) parts.push(`${dw}kg`);
+      if(dwf) parts.push(`${dwf}%`);
+      lines.push(`先週からの変化：${parts.join(' / ')}`);
+    }
+    if(ds||dsf){
+      const parts=[];
+      if(ds) parts.push(`${ds}kg`);
+      if(dsf) parts.push(`${dsf}%`);
+      lines.push(`スタートからの変化：${parts.join(' / ')}`);
+    }
+    lines.push('');
+  }
+  const review=loadWeekly('review');
+  if(review){ lines.push(`今週の振り返り`); lines.push(review); lines.push(''); }
+
+  const fg=loadWeekly('food_good'), fi=loadWeekly('food_improve');
+  if(fg||fi){
+    lines.push(`○食事`);
+    if(fg) lines.push(`良かった点：${fg}`);
+    if(fi) lines.push(`気をつけたい点：${fi}`);
+    lines.push('');
+  }
+  const ed=loadWeekly('exercise_done'), eg=loadWeekly('exercise_goal');
+  if(ed||eg){
+    lines.push(`○運動`);
+    if(ed) lines.push(`できたこと：${ed}`);
+    if(eg) lines.push(`頑張りたいこと：${eg}`);
+    lines.push('');
+  }
+  const goal=loadWeekly('goal');
+  if(goal){ lines.push(`○一週間の目標`); lines.push(goal); lines.push(''); }
+
+  const memo=loadWeekly('memo');
+  if(memo){ lines.push(`○メモ欄`); lines.push(memo); lines.push(''); }
+
+  return lines.join('\n').trimEnd();
+}
+
+function copyAll() {
+  const text = currentTab==='daily' ? buildDailyReport() : buildWeeklyReport();
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.getElementById('copyBtn');
+    btn.classList.add('copied'); btn.textContent='コピーしました!';
+    showToast('クリップボードにコピーしました');
+    setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent='コピーして報告する'; },2000);
+  }).catch(()=>showToast('コピーに失敗しました'));
+}
+
+// Start records (global)
+function saveStartField(key,val) { localStorage.setItem(`reborn_start_${key}`,val); }
+function getStartField(key) { return localStorage.getItem(`reborn_start_${key}`)||''; }
+function loadStartFields() {
+  const sw=document.getElementById('start-weight');
+  const sf=document.getElementById('start-fat');
+  if(sw) sw.value=getStartField('weight');
+  if(sf) sf.value=getStartField('fat');
+}
+
+// Section visibility (global)
+const SECTIONS = [
+  {key:'condition', label:'コンディション'},
+  {key:'steps', label:'歩数'},
+  {key:'water', label:'水分'},
+  {key:'today', label:'今日あったこと'},
+  {key:'memo', label:'ひとことメモ'}
+];
+function getSectionVisible(key) {
+  const v=localStorage.getItem(`reborn_show_${key}`);
+  // Water and steps are hidden by default
+  if(v===null) return !(key==='water'||key==='steps');
+  return v==='1';
+}
+function setSectionVisible(key,val) {
+  localStorage.setItem(`reborn_show_${key}`, val?'1':'0');
+  applyVisibility();
+}
+function renderToggles() {
+  const el=document.getElementById('toggle-list');
+  el.innerHTML=SECTIONS.map(s=>`
+    <div class="toggle-row">
+      <span>${s.label}</span>
+      <label class="toggle-sw">
+        <input type="checkbox" ${getSectionVisible(s.key)?'checked':''} onchange="setSectionVisible('${s.key}',this.checked)">
+        <div class="toggle-track"></div>
+      </label>
+    </div>`).join('');
+}
+function applyVisibility() {
+  const map = {
+    condition:'section-condition', morning:'meal-morning', lunch:'meal-lunch',
+    dinner:'meal-dinner', snack:'section-snack', steps:'section-steps', water:'section-water',
+    today:'section-today', memo:'section-memo'
+  };
+  Object.keys(map).forEach(k=>{
+    const el=document.getElementById(map[k]);
+    if(el) el.style.display=getSectionVisible(k)?'':'none';
+  });
+}
+
+// Custom items (global list of labels, per-date values)
+function getCustomItems() {
+  const r=localStorage.getItem('reborn_custom_items');
+  if(r) return JSON.parse(r);
+  // Initialize with default items on first use
+  const defaults=['運動'];
+  localStorage.setItem('reborn_custom_items', JSON.stringify(defaults));
+  return defaults;
+}
+function saveCustomItems(arr) { localStorage.setItem('reborn_custom_items', JSON.stringify(arr)); }
+
+function addCustomItem() {
+  const inp=document.getElementById('custom-input'), val=inp.value.trim();
+  if(!val) return;
+  const items=getCustomItems();
+  if(!items.includes(val)){ items.push(val); saveCustomItems(items); }
+  inp.value=''; renderCustomList(); renderCustomItems();
+}
+function removeCustomItem(idx) {
+  const items=getCustomItems(); items.splice(idx,1); saveCustomItems(items);
+  renderCustomList(); renderCustomItems();
+}
+function renderCustomList() {
+  const el=document.getElementById('custom-list');
+  if(!el) return;
+  const items=getCustomItems();
+  el.innerHTML=items.map((f,i)=>`
+    <span class="fav-tag">${escapeHtml(f)}<button class="fav-del" onclick="removeCustomItem(${i})">&#10005;</button></span>`).join('');
+}
+function renderCustomItems() {
+  const el=document.getElementById('custom-items-container');
+  if(!el) return;
+  const items=getCustomItems();
+  el.innerHTML=items.map((name,i)=>`
+    <div class="text-section">
+      <label>${escapeHtml(name)} <span class="card-badge">（任意）</span></label>
+      <div class="meal-time-row" style="margin-top:4px;">
+        <span>時間</span>
+        <input type="text" id="custom-time-${i}" value="${escapeHtml(loadField('custom_time_'+i))}" placeholder="任意" oninput="saveField('custom_time_${i}',this.value)">
+        <span class="time-hint" style="margin:0 0 0 4px;">※入れるとコピー時に時系列に並びます</span>
+      </div>
+      <textarea id="custom-${i}" placeholder="..." oninput="saveCustomValue(${i},this.value)">${escapeHtml(loadField('custom_'+i))}</textarea>
+    </div>`).join('');
+}
+function saveCustomValue(idx, val) { saveField(`custom_${idx}`, val); }
+
+// Emoji settings (global)
+const DEFAULT_EMOJI = { morning:'🍳', lunch:'🍽', dinner:'🌙', snack:'☕', water:'💧' };
+function saveEmoji(key,val) { localStorage.setItem(`reborn_emoji_${key}`,val); }
+function getEmoji(key) { return localStorage.getItem(`reborn_emoji_${key}`) || DEFAULT_EMOJI[key] || ''; }
+function loadEmojiSettings() {
+  ['morning','lunch','dinner','snack','water'].forEach(k=>{
+    const el=document.getElementById(`emoji-${k}`);
+    if(el) el.value=localStorage.getItem(`reborn_emoji_${k}`)||'';
+  });
+  // Render custom item emoji rows
+  const cRow=document.getElementById('emoji-custom-rows');
+  if(cRow){
+    const items=getCustomItems();
+    cRow.innerHTML=items.map((name,i)=>`
+      <div class="emoji-row"><label>${escapeHtml(name)}</label><input type="text" id="emoji-custom-${i}" value="${escapeHtml(localStorage.getItem('reborn_emoji_custom_'+i)||'')}" placeholder="🔥" oninput="saveEmoji('custom_${i}',this.value)"></div>
+    `).join('');
+  }
+}
+
+// Favorites (global, not per-date)
+function getFavorites() { const r=localStorage.getItem('reborn_favorites'); return r?JSON.parse(r):[]; }
+function saveFavorites(arr) { localStorage.setItem('reborn_favorites', JSON.stringify(arr)); }
+
+function addFavorite() {
+  const inp=document.getElementById('fav-input'), val=inp.value.trim();
+  if(!val) return;
+  const favs=getFavorites();
+  if(!favs.includes(val)){ favs.push(val); saveFavorites(favs); }
+  inp.value=''; renderFavorites();
+  Object.keys(MEALS).forEach(m=>renderMeal(m));
+}
+function removeFavorite(idx) {
+  const favs=getFavorites(); favs.splice(idx,1); saveFavorites(favs); renderFavorites();
+  Object.keys(MEALS).forEach(m=>renderMeal(m));
+}
+function renderFavorites() {
+  const favs=getFavorites();
+  document.getElementById('fav-list').innerHTML=favs.map((f,i)=>`
+    <span class="fav-tag">${escapeHtml(f)}<button class="fav-del" onclick="removeFavorite(${i})">&#10005;</button></span>`).join('');
+}
+
+// Favorite snacks (global)
+function getFavSnacks() { const r=localStorage.getItem('reborn_fav_snacks'); return r?JSON.parse(r):[]; }
+function saveFavSnacks(arr) { localStorage.setItem('reborn_fav_snacks', JSON.stringify(arr)); }
+
+function addFavSnack() {
+  const inp=document.getElementById('fav-snack-input'), val=inp.value.trim();
+  if(!val) return;
+  const favs=getFavSnacks();
+  if(!favs.includes(val)){ favs.push(val); saveFavSnacks(favs); }
+  inp.value=''; renderFavSnacks(); renderSnacks();
+}
+function removeFavSnack(idx) {
+  const favs=getFavSnacks(); favs.splice(idx,1); saveFavSnacks(favs); renderFavSnacks(); renderSnacks();
+}
+function renderFavSnacks() {
+  const el=document.getElementById('fav-snack-list');
+  if(!el) return;
+  const favs=getFavSnacks();
+  el.innerHTML=favs.map((f,i)=>`
+    <span class="fav-tag">${escapeHtml(f)}<button class="fav-del" onclick="removeFavSnack(${i})">&#10005;</button></span>`).join('');
+}
+
+// Insert favorite chip into a meal's food list
+function favToMeal(meal, food) {
+  const items=getData(meal); items.push(food); setData(meal,items); renderMeal(meal);
+}
+function favToSnack(idx, food) {
+  const snacks=getSnacks(); snacks[idx].items.push(food); saveSnacks(snacks); renderSnacks();
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),1800);
+}
+function escapeHtml(str) { const d=document.createElement('div'); d.textContent=str; return d.innerHTML; }
+
+renderAll();
+</script>
+</body>
+</html>
